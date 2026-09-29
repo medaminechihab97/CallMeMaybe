@@ -134,6 +134,7 @@ def main() -> int:
         functions = load_functions(path)
 
         question = input("Your request: ").strip()
+
         if not question:
             raise ValueError("The request must not be empty.")
 
