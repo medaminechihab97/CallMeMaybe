@@ -17,3 +17,9 @@ constraint-dependencies = [
 
 [tool.uv.sources]
 llm-sdk = { path = "./llm_sdk" }
+
+[dependency-groups]
+dev = [
+    "flake8>=7.4.1",
+    "mypy>=2.3.1",
+]
