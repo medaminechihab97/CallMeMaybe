@@ -67,7 +67,10 @@ def load_token_text(model: Small_LLM_Model) -> dict[int, str]:
                 "Vocabulary does not match the byte-level mapping."
             ) from exc
 
-        if raw and all(0x20 <= byte <= 0x7E for byte in raw):
+        if raw and all(
+            0x20 <= byte <= 0x7E or byte in (9, 10, 13)
+            for byte in raw
+            ):
             fragments[token_id] = raw.decode("ascii")
 
     # Ensure basic compact JSON text can be represented.

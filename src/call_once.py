@@ -134,32 +134,107 @@ def generate_parameters(
     generated_ids: list[int] = []
     pieces: list[str] = []
 
-    for _ in range(max_tokens):
+    # for _ in range(max_tokens):
+    #     logits = model.get_logits_from_input_ids(input_ids)
+
+    #     token_id, text, parser = choose_token(
+    #         logits, fragments, parser
+    #     )
+
+    #     input_ids.append(token_id)
+    #     generated_ids.append(token_id)
+    #     pieces.append(text)
+
+    #     if parser.is_complete():
+    #         result = "".join(pieces)
+
+    #         # Fail closed if our adapter disagrees with SDK decoding.
+    #         if model.decode(generated_ids) != result:
+    #             raise RuntimeError(
+    #                 "Token adapter and SDK decoding disagree."
+    #             )
+
+    #         return validate_parameters(result, function)
+    for step in range(max_tokens):
         logits = model.get_logits_from_input_ids(input_ids)
+
+        if step < 12:
+            print(
+                f"\n[TRACE step {step + 1}] "
+                f"prefix={''.join(pieces)!r}",
+                file=sys.stderr,
+            )
+
+            scores = np.asarray(logits, dtype=np.float64)
+
+            for candidate in np.argsort(scores)[-5:][::-1]:
+                candidate_id = int(candidate)
+                fragment = fragments.get(candidate_id)
+
+                if fragment is None:
+                    verdict = "excluded by token adapter"
+                elif parser.can_accept(fragment):
+                    verdict = "allowed"
+                else:
+                    verdict = "rejected by parser"
+
+                try:
+                    decoded = model.decode([candidate_id])
+                except Exception:
+                    decoded = "<could not decode this ID>"
+
+                print(
+                    f"  id={candidate_id} "
+                    f"score={scores[candidate_id]:.3f} "
+                    f"mapped={fragment!r} "
+                    f"decoded={decoded!r} "
+                    f"{verdict}",
+                    file=sys.stderr,
+                )
 
         token_id, text, parser = choose_token(
             logits, fragments, parser
         )
 
+        if step < 12:
+            print(
+                f"  CHOSEN id={token_id} text={text!r}",
+                file=sys.stderr,
+            )
+
         input_ids.append(token_id)
         generated_ids.append(token_id)
         pieces.append(text)
 
-        if parser.is_complete():
-            result = "".join(pieces)
+        # Check the mapping immediately, not only after completion.
+        expected = "".join(pieces)
+        actual = model.decode(generated_ids)
 
-            # Fail closed if our adapter disagrees with SDK decoding.
-            if model.decode(generated_ids) != result:
-                raise RuntimeError(
-                    "Token adapter and SDK decoding disagree."
-                )
-
-            return validate_parameters(result, function)
-
-    raise RuntimeError(
-        "Parameter generation reached its limit before completion."
+        if actual != expected:
+            raise RuntimeError(
+                f"Token decoding mismatch at step {step + 1}.\n"
+                f"Adapter text: {expected!r}\n"
+                f"SDK text: {actual!r}"
+            )
+    # raise RuntimeError(
+    #     "Parameter generation reached its limit before completion."
+    # )
+    partial = "".join(pieces)
+    active_state = (
+        parser.value.model_dump()
+        if parser.value is not None
+        else None
     )
-
+    raise RuntimeError(
+        "Parameter generation reached its limit before completion.\n"
+        f"Selected function: {function.name}\n"
+        f"Generated tokens: {len(generated_ids)}/{max_tokens}\n"
+        f"Object part: {parser.part_index}/{len(parser.parts)}\n"
+        f"Literal offset: {parser.literal_offset}\n"
+        f"Value parser: {active_state!r}\n"
+        f"Output beginning: {partial[:200]!r}\n"
+        f"Output ending: {partial[-200:]!r}"
+    )
 
 def main() -> int:
     """Run the function-selection and parameter-extraction stages."""

@@ -65,13 +65,22 @@ class ParameterObjectParser(BaseModel):
         )
 
     def _consume(self, character: str) -> "ParameterObjectParser":
-        """Consume one character, including value-boundary handling."""
+        """Consume one character, allowing JSON boundary whitespace."""
+        whitespace = character in " \t\r\n"
+
         if self.is_complete():
+            if whitespace:
+                return self
             raise ValueError("Unexpected text after the object.")
 
         part = self.parts[self.part_index]
 
         if isinstance(part, str):
+            # Allow whitespace before a key or structural literal,
+            # but never skip characters inside a quoted key.
+            if self.literal_offset == 0 and whitespace:
+                return self
+
             expected = part[self.literal_offset]
 
             if character != expected:
@@ -89,12 +98,13 @@ class ParameterObjectParser(BaseModel):
             )
 
         active = self.value
+
         if active is None:
+            # Before a value begins, whitespace is formatting.
+            if whitespace:
+                return self
             active = make_value_parser(part)
 
-        # Numbers do not have an explicit closing character.
-        # If this character cannot extend the number, it may
-        # belong to the next object part instead.
         if isinstance(active, NumberParser):
             if not active.can_accept(character):
                 if not active.is_complete():
@@ -102,13 +112,16 @@ class ParameterObjectParser(BaseModel):
                         f"Incomplete number for {part.name!r}."
                     )
 
-                # Reprocess the SAME character as object syntax.
+                # End the number, then process the same character
+                # as object syntax. Whitespace must terminate a
+                # number: "1 2" must never become "12".
                 return self._next_part()._consume(character)
 
+        # Inside a string, spaces belong to the value; unescaped
+        # control characters remain forbidden by StringParser.
+        # Inside a boolean, whitespace cannot split its spelling.
         updated = active.accept(character)
 
-        # Strings close with a quote; booleans finish when their
-        # full literal has been consumed.
         if not isinstance(updated, NumberParser):
             if updated.is_complete():
                 return self._next_part()
@@ -162,7 +175,8 @@ def build_parameter_parser(
             parts.append(",")
 
         encoded_name = json.dumps(spec.name, ensure_ascii=True)
-        parts.append(encoded_name + ":")
+        parts.append(encoded_name)
+        parts.append(":")
         parts.append(spec)
 
     parts.append("}")
