@@ -90,6 +90,7 @@ class NumberParser(BaseModel):
     )
 
     state: NumberState = "start"
+    integer_only: bool = False
 
     def is_complete(self) -> bool:
         """Return whether the number may legally end here."""
@@ -104,6 +105,10 @@ class NumberParser(BaseModel):
 
         for character in text:
             category = character_category(character)
+            if self.integer_only and category in {".", "e"}:
+                raise ValueError(
+                    "Integer values cannot contain decimals or exponents."
+                )
             next_state = TRANSITIONS[state].get(category)
 
             if next_state is None:
@@ -114,7 +119,10 @@ class NumberParser(BaseModel):
 
             state = next_state
 
-        return NumberParser(state=state)
+        return NumberParser(
+            state=state,
+            integer_only=self.integer_only,
+        )
 
     def can_accept(self, text: str) -> bool:
         """Check a fragment without changing the current parser."""

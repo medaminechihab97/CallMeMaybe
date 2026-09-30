@@ -1,0 +1,9 @@
+[
+  {
+    "prompt": "Greet john",
+    "name": "fn_greet",
+    "parameters": {
+      "name": "john"
+    }
+  }
+]

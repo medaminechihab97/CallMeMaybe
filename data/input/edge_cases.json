@@ -1,0 +1,26 @@
+[
+  {
+    "prompt": "Add -12 and 7."
+  },
+  {
+    "prompt": "What is the sum of 2.5 and 0.75?"
+  },
+  {
+    "prompt": "Greet the person whose full name is Mary Jane."
+  },
+  {
+    "prompt": "Reverse the empty string."
+  },
+  {
+    "prompt": "Reverse this exact text: He said \"hello\"."
+  },
+  {
+    "prompt": "Greet the person named José."
+  },
+  {
+    "prompt": "Replace all vowels, both uppercase and lowercase, in 'APPLE and orange' with asterisks."
+  },
+  {
+    "prompt": "Substitute the whole word 'cat' with 'dog' in 'The cat will concatenate strings'. Do not change occurrences inside other words."
+  }
+]

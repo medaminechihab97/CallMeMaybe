@@ -20,7 +20,7 @@ class ParameterSpec(BaseModel):
     )
 
     name: str
-    kind: Literal["number", "string", "boolean"]
+    kind: Literal["number", "string", "boolean", "integer"]
 
 
 ValueParser: TypeAlias = NumberParser | StringParser | BooleanParser
@@ -29,6 +29,8 @@ Part: TypeAlias = str | ParameterSpec
 
 def make_value_parser(spec: ParameterSpec) -> ValueParser:
     """Create a fresh parser for a parameter's value."""
+    if spec.kind == "integer":
+        return NumberParser(integer_only=True)
     if spec.kind == "number":
         return NumberParser()
     if spec.kind == "string":

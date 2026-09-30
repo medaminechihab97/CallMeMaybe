@@ -74,13 +74,16 @@ def validate_parameters(
     for name, metadata in function.parameters.items():
         item = value[name]
         kind = metadata["type"]
-
-        if kind == "number":
-            # bool is a subclass of int: use exact types here.
-            if type(item) not in (int, float):
-                raise ValueError(f"{name!r} must be a number.")
-            if isinstance(item, float) and not math.isfinite(item):
-                raise ValueError(f"{name!r} must be finite.")
+        if kind == "integer":
+            if type(item) is not int:
+                raise ValueError(f"{name!r} must be an integer.")
+            
+            elif kind == "number":
+                # bool is a subclass of int: use exact types here.
+                if type(item) not in (int, float):
+                    raise ValueError(f"{name!r} must be a number.")
+                if isinstance(item, float) and not math.isfinite(item):
+                    raise ValueError(f"{name!r} must be finite.")
 
         elif kind == "string":
             if type(item) is not str:
@@ -122,7 +125,21 @@ def generate_parameters(
         f"Selected function: {definition}\n"
         f"Parameter order: {order}"
     )
+    example_pattern = r"\bTOKEN\b"
+    example_json = json.dumps({"pattern": example_pattern})
 
+    instructions += (
+        "\nString encoding rules:\n"
+        "Preserve the intended string value after JSON decoding. "
+        "A literal backslash in a string must be escaped in JSON. "
+        "For regex arguments, distinguish regex escapes from JSON "
+        "control-character escapes. Do not substitute a backspace "
+        "character for a regex word boundary.\n"
+        f"Encoding example only: the regex {example_pattern} "
+        f"is represented by this JSON: {example_json}\n"
+        "Do not copy TOKEN into your answer. Derive argument values "
+        "from the user's request."
+    )
     prompt = (
         f"<|im_start|>system\n{instructions}<|im_end|>\n"
         f"<|im_start|>user\n{question}<|im_end|>\n"
@@ -134,27 +151,6 @@ def generate_parameters(
     generated_ids: list[int] = []
     pieces: list[str] = []
 
-    # for _ in range(max_tokens):
-    #     logits = model.get_logits_from_input_ids(input_ids)
-
-    #     token_id, text, parser = choose_token(
-    #         logits, fragments, parser
-    #     )
-
-    #     input_ids.append(token_id)
-    #     generated_ids.append(token_id)
-    #     pieces.append(text)
-
-    #     if parser.is_complete():
-    #         result = "".join(pieces)
-
-    #         # Fail closed if our adapter disagrees with SDK decoding.
-    #         if model.decode(generated_ids) != result:
-    #             raise RuntimeError(
-    #                 "Token adapter and SDK decoding disagree."
-    #             )
-
-    #         return validate_parameters(result, function)
     for step in range(max_tokens):
         logits = model.get_logits_from_input_ids(input_ids)
 
@@ -216,6 +212,8 @@ def generate_parameters(
                 f"Adapter text: {expected!r}\n"
                 f"SDK text: {actual!r}"
             )
+        if parser.is_complete():
+            return validate_parameters(expected, function)
     # raise RuntimeError(
     #     "Parameter generation reached its limit before completion."
     # )

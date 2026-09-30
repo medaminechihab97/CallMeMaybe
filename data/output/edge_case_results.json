@@ -1,0 +1,64 @@
+[
+  {
+    "prompt": "Add -12 and 7.",
+    "name": "fn_add_numbers",
+    "parameters": {
+      "a": -12,
+      "b": 7
+    }
+  },
+  {
+    "prompt": "What is the sum of 2.5 and 0.75?",
+    "name": "fn_add_numbers",
+    "parameters": {
+      "a": 2.5,
+      "b": 0.75
+    }
+  },
+  {
+    "prompt": "Greet the person whose full name is Mary Jane.",
+    "name": "fn_greet",
+    "parameters": {
+      "name": "Mary Jane"
+    }
+  },
+  {
+    "prompt": "Reverse the empty string.",
+    "name": "fn_reverse_string",
+    "parameters": {
+      "s": "empty"
+    }
+  },
+  {
+    "prompt": "Reverse this exact text: He said \"hello\".",
+    "name": "fn_reverse_string",
+    "parameters": {
+      "s": "He said 'hello'"
+    }
+  },
+  {
+    "prompt": "Greet the person named Jos\u00e9.",
+    "name": "fn_greet",
+    "parameters": {
+      "name": "Josue"
+    }
+  },
+  {
+    "prompt": "Replace all vowels, both uppercase and lowercase, in 'APPLE and orange' with asterisks.",
+    "name": "fn_substitute_string_with_regex",
+    "parameters": {
+      "source_string": "APPLE and orange",
+      "regex": "([aeiouAEIOU])",
+      "replacement": "*"
+    }
+  },
+  {
+    "prompt": "Substitute the whole word 'cat' with 'dog' in 'The cat will concatenate strings'. Do not change occurrences inside other words.",
+    "name": "fn_substitute_string_with_regex",
+    "parameters": {
+      "source_string": "The cat will concatenate strings.",
+      "regex": "cat",
+      "replacement": "dog"
+    }
+  }
+]
