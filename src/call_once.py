@@ -78,12 +78,12 @@ def validate_parameters(
             if type(item) is not int:
                 raise ValueError(f"{name!r} must be an integer.")
             
-            elif kind == "number":
-                # bool is a subclass of int: use exact types here.
-                if type(item) not in (int, float):
-                    raise ValueError(f"{name!r} must be a number.")
-                if isinstance(item, float) and not math.isfinite(item):
-                    raise ValueError(f"{name!r} must be finite.")
+        elif kind == "number":
+            # bool is a subclass of int: use exact types here.
+            if type(item) not in (int, float):
+                raise ValueError(f"{name!r} must be a number.")
+            if isinstance(item, float) and not math.isfinite(item):
+                raise ValueError(f"{name!r} must be finite.")
 
         elif kind == "string":
             if type(item) is not str:
