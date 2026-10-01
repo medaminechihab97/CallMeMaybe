@@ -19,7 +19,7 @@ def main() -> None:
         '{"count":-1.25e+2,"name":"","enabled":false}',
         r'{"count":0,"name":"say \"hi\"","enabled":true}',
         r'{"count":2,"name":"\u0041","enabled":false}',
-                '{"count": 12,"name":"Ali","enabled":true}',
+        '{"count": 12,"name":"Ali","enabled":true}',
     ]
 
     for text in valid:
