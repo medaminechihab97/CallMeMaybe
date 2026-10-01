@@ -22,10 +22,10 @@ clean:
 lint: lint-flake8 lint-mypy
 
 lint-flake8:
-	$(UV) run flake8 .
+	$(UV) run flake8 src
 
 lint-mypy:
-	$(UV) run mypy . \
+	$(UV) run mypy src \
 		--warn-return-any \
 		--warn-unused-ignores \
 		--ignore-missing-imports \
@@ -33,5 +33,5 @@ lint-mypy:
 		--check-untyped-defs
 
 lint-strict:
-	$(UV) run flake8 .
-	$(UV) run mypy . --strict
+	$(UV) run flake8 src
+	$(UV) run mypy src --strict

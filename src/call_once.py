@@ -79,11 +79,29 @@ def validate_parameters(
                 raise ValueError(f"{name!r} must be an integer.")
 
         elif kind == "number":
-            # bool is a subclass of int: use exact types here.
+            # Accept only actual numbers, not strings or booleans.
             if type(item) not in (int, float):
                 raise ValueError(f"{name!r} must be a number.")
-            if isinstance(item, float) and not math.isfinite(item):
+
+            # Convert integer-looking numbers: 2 becomes 2.0.
+            try:
+                number = float(item)
+            except OverflowError as exc:
+                raise ValueError(
+                    f"{name!r} is too large for float output."
+                ) from exc
+
+            if not math.isfinite(number):
                 raise ValueError(f"{name!r} must be finite.")
+
+            # Reject conversion if it changes a large integer's value.
+            if type(item) is int and number != item:
+                raise ValueError(
+                    f"{name!r} cannot be represented exactly as a float."
+                )
+
+            # Store the float in the dictionary that will be saved.
+            value[name] = number
 
         elif kind == "string":
             if type(item) is not str:

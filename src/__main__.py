@@ -165,9 +165,7 @@ def main() -> int:
         return 130
     except Exception as exc:
         print(
-            f"Error ({type(exc).__name__}): {exc}\n"
-            "The batch did not complete successfully. An existing "
-            "results file may belong to an earlier run.",
+            f"Error ({type(exc).__name__}): {exc}",
             file=sys.stderr,
         )
         return 1

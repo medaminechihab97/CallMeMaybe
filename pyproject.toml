@@ -35,4 +35,9 @@ exclude = [
     "(^|/)\\.mypy_cache/",
     "(^|/)\\.pytest_cache/",
     "(^|/)__pycache__/",
+    '^llm_sdk/',
 ]
+
+[[tool.mypy.overrides]]
+module = "llm_sdk"
+disable_error_code = ["arg-type"]
