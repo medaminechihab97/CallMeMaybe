@@ -1,8 +1,0 @@
-[flake8]
-exclude =
-    .git,
-    .venv,
-    myenv,
-    __pycache__,
-    .mypy_cache,
-    .pytest_cache
