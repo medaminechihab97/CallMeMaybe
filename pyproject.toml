@@ -23,3 +23,16 @@ dev = [
     "flake8>=7.4.1",
     "mypy>=2.3.1",
 ]
+
+[tool.mypy]
+python_version = "3.10"
+mypy_path = ["$MYPY_CONFIG_FILE_DIR/llm_sdk"]
+show_error_codes = true
+pretty = true
+exclude = [
+    "(^|/)\\.venv/",
+    "(^|/)myenv/",
+    "(^|/)\\.mypy_cache/",
+    "(^|/)\\.pytest_cache/",
+    "(^|/)__pycache__/",
+]

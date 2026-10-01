@@ -77,7 +77,7 @@ def validate_parameters(
         if kind == "integer":
             if type(item) is not int:
                 raise ValueError(f"{name!r} must be an integer.")
-            
+
         elif kind == "number":
             # bool is a subclass of int: use exact types here.
             if type(item) not in (int, float):
@@ -233,6 +233,7 @@ def generate_parameters(
         f"Output beginning: {partial[:200]!r}\n"
         f"Output ending: {partial[-200:]!r}"
     )
+
 
 def main() -> int:
     """Run the function-selection and parameter-extraction stages."""
