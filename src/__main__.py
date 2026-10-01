@@ -5,11 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from src.batch_io import (
-    check_output_path,
-    load_prompts,
-    write_json_atomic,
-)
+
 
 
 def build_cli() -> argparse.ArgumentParser:
@@ -46,6 +42,11 @@ def run_batch(
     output_path: Path,
 ) -> int:
     """Generate all results and publish them only after full success."""
+    from src.batch_io import (
+    check_output_path,
+    load_prompts,
+    write_json_atomic,
+)
     check_output_path(
         output_path,
         [definitions_path, input_path],
@@ -163,6 +164,15 @@ def main() -> int:
             file=sys.stderr,
         )
         return 130
+    except ModuleNotFoundError as exc:
+        print(
+            f"Error: missing Python module {exc.name!r}.\n"
+            "Prepare the local dependency files and supplied SDK, "
+            "then run 'uv sync' from the project root.\n"
+            "These setup files do not need to be committed.",
+            file=sys.stderr,
+        )
+        return 1
     except Exception as exc:
         print(
             f"Error ({type(exc).__name__}): {exc}",

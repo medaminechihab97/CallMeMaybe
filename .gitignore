@@ -3,5 +3,4 @@ output/
 llm_sdk/
 .venv/
 .flake8
-uv.lock
-pyproject.toml
+
