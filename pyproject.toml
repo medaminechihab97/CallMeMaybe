@@ -37,3 +37,4 @@ exclude = [
 [[tool.mypy.overrides]]
 module = "llm_sdk"
 disable_error_code = ["arg-type"]
+follow_imports = "silent"

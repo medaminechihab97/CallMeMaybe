@@ -94,12 +94,6 @@ def validate_parameters(
             if not math.isfinite(number):
                 raise ValueError(f"{name!r} must be finite.")
 
-            # Reject conversion if it changes a large integer's value.
-            if type(item) is int and number != item:
-                raise ValueError(
-                    f"{name!r} cannot be represented exactly as a float."
-                )
-
             # Store the float in the dictionary that will be saved.
             value[name] = number
 
@@ -172,49 +166,9 @@ def generate_parameters(
     for step in range(max_tokens):
         logits = model.get_logits_from_input_ids(input_ids)
 
-        if step < 12:
-            print(
-                f"\n[TRACE step {step + 1}] "
-                f"prefix={''.join(pieces)!r}",
-                file=sys.stderr,
-            )
-
-            scores = np.asarray(logits, dtype=np.float64)
-
-            for candidate in np.argsort(scores)[-5:][::-1]:
-                candidate_id = int(candidate)
-                fragment = fragments.get(candidate_id)
-
-                if fragment is None:
-                    verdict = "excluded by token adapter"
-                elif parser.can_accept(fragment):
-                    verdict = "allowed"
-                else:
-                    verdict = "rejected by parser"
-
-                try:
-                    decoded = model.decode([candidate_id])
-                except Exception:
-                    decoded = "<could not decode this ID>"
-
-                print(
-                    f"  id={candidate_id} "
-                    f"score={scores[candidate_id]:.3f} "
-                    f"mapped={fragment!r} "
-                    f"decoded={decoded!r} "
-                    f"{verdict}",
-                    file=sys.stderr,
-                )
-
         token_id, text, parser = choose_token(
             logits, fragments, parser
         )
-
-        if step < 12:
-            print(
-                f"  CHOSEN id={token_id} text={text!r}",
-                file=sys.stderr,
-            )
 
         input_ids.append(token_id)
         generated_ids.append(token_id)
@@ -232,9 +186,7 @@ def generate_parameters(
             )
         if parser.is_complete():
             return validate_parameters(expected, function)
-    # raise RuntimeError(
-    #     "Parameter generation reached its limit before completion."
-    # )
+
     partial = "".join(pieces)
     active_state = (
         parser.value.model_dump()

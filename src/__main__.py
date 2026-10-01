@@ -6,8 +6,6 @@ import sys
 from pathlib import Path
 
 
-
-
 def build_cli() -> argparse.ArgumentParser:
     """Define the assignment's command-line arguments."""
     parser = argparse.ArgumentParser(
@@ -29,7 +27,7 @@ def build_cli() -> argparse.ArgumentParser:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("data/output/function_calling_results.json"),
+        default=Path("data/output/function_calls.json"),
         help="Destination for the complete results JSON array.",
     )
 
@@ -40,13 +38,18 @@ def run_batch(
     definitions_path: Path,
     input_path: Path,
     output_path: Path,
-) -> int:
-    """Generate all results and publish them only after full success."""
+) -> tuple[int, int]:
+    """Generate results, skip failed prompts, and publish the file.
+
+    Returns:
+        The number of saved results and the number of skipped prompts.
+    """
     from src.batch_io import (
-    check_output_path,
-    load_prompts,
-    write_json_atomic,
-)
+        check_output_path,
+        load_prompts,
+        write_json_atomic,
+    )
+
     check_output_path(
         output_path,
         [definitions_path, input_path],
@@ -65,6 +68,7 @@ def run_batch(
         build_parameter_parser(function.parameters)
 
     results: list[dict[str, object]] = []
+    skipped = 0
 
     # An empty input array produces [] without loading model weights.
     if prompts:
@@ -132,10 +136,14 @@ def run_batch(
                 })
 
             except Exception as exc:
-                raise RuntimeError(
-                    f"Prompt {index}/{total} failed "
-                    f"({type(exc).__name__}): {exc}"
-                ) from exc
+                # One bad prompt must not discard the whole batch.
+                skipped += 1
+                print(
+                    f"Warning: skipped prompt {index}/{total} "
+                    f"({type(exc).__name__}): {exc}",
+                    file=sys.stderr,
+                    flush=True,
+                )
 
     # Repeat the collision check immediately before publishing.
     check_output_path(
@@ -144,7 +152,7 @@ def run_batch(
     )
     write_json_atomic(output_path, results)
 
-    return len(results)
+    return len(results), skipped
 
 
 def main() -> int:
@@ -152,7 +160,7 @@ def main() -> int:
     args = build_cli().parse_args()
 
     try:
-        count = run_batch(
+        count, skipped = run_batch(
             args.functions_definition,
             args.input,
             args.output,
@@ -184,6 +192,11 @@ def main() -> int:
         f"Saved {count} result(s) to {args.output}",
         file=sys.stderr,
     )
+    if skipped:
+        print(
+            f"Skipped {skipped} prompt(s); see the warnings above.",
+            file=sys.stderr,
+        )
     return 0
 
 

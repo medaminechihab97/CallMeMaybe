@@ -2,5 +2,4 @@ __pycache__/
 output/
 
 .venv/
-.flake8
-
+.mypy_cache/

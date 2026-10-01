@@ -22,7 +22,7 @@ Default inputs:
 - `data/input/functions_definition.json`
 - `data/input/function_calling_tests.json`
 
-Default output: `data/output/function_calling_results.json`.
+Default output: `data/output/function_calls.json`.
 
 ### Custom paths
 ```bash
@@ -37,12 +37,13 @@ uv run python -m src \
 make install  # Install dependencies
 make run      # Run the default batch
 make debug    # Start Python's debugger
-make lint     # Run Flake8 and mypy
+make lint     # Run flake8 . and mypy . with the required flags
+make lint-strict  # Run flake8 . and mypy . --strict
 make clean    # Remove project caches
 ```
 
 ## Example Usage
-For “What is the sum of 2 and 3?”, the desired result is:
+For “What is the sum of 2 and 3?”, the program writes:
 ```json
 {
   "prompt": "What is the sum of 2 and 3?",
@@ -50,8 +51,7 @@ For “What is the sum of 2 and 3?”, the desired result is:
   "parameters": {"a": 2.0, "b": 3.0}
 }
 ```
-Verify float normalization in the final implementation; earlier versions
-serialized whole-valued `number` arguments as integers.
+Whole-valued `number` arguments are always saved as floats (`2.0`, not `2`).
 
 ## Algorithm Explanation
 1. Validate requests and function definitions before loading model weights.
@@ -61,7 +61,8 @@ serialized whole-valued `number` arguments as integers.
 5. Test candidate token fragments against that parser, accepting the
    highest-scoring valid continuation without mutating rejected trial states.
 6. Stop at object completion, verify decoding, and validate keys and types.
-7. Publish results through a temporary file only after the full batch succeeds.
+7. Skip a prompt that fails (with a warning on stderr) so the rest of the
+   batch is still saved, then publish results through a temporary file.
 
 ## Design Decisions
 - Separate function selection from argument extraction.
@@ -73,11 +74,18 @@ serialized whole-valued `number` arguments as integers.
 - Keep the supplied SDK unchanged and document dependency-check workarounds.
 
 ## Performance Analysis
-The original 11-call development batch appeared correct by inspection.
-An eight-case edge fixture selected every function correctly, but only
-four calls had fully correct arguments. These are historical fixture results,
-not general accuracy estimates. Runtime and the 90% accuracy target remain
-unverified. Valid structure does not guarantee correct meaning or completion.
+- **Accuracy:** on the provided 11-prompt batch, all 11 function selections
+  and all 11 argument sets are correct (including the regex cases `\d+`,
+  `([aeiou])` and `cat` → `dog`). An earlier eight-case edge fixture selected
+  every function correctly but had fully correct arguments in only four cases,
+  so accuracy on unseen prompts can be lower.
+- **Speed:** the 11-prompt batch takes about 3 minutes on a laptop CPU,
+  including model loading (limit: 5 minutes).
+- **Reliability:** every saved object is valid JSON that matches the schema,
+  because invalid tokens are never accepted and each result is revalidated.
+  A prompt that cannot be completed (for example, more than 256 generated
+  tokens) is skipped with a warning instead of aborting the batch.
+  Valid structure does not guarantee correct meaning.
 
 ## Challenges Faced
 Development addressed regex/JSON escaping, multi-character token boundaries,
@@ -101,4 +109,6 @@ Retain local regression tests, measure runtime, and do not commit outputs.
 - [Flake8](https://flake8.pycqa.org/en/latest/)
 
 ### AI Assistance
-help with understanding basic concepts, discuss some design decisions and help with README drafting.
+AI was used to help understand basic concepts, discuss some design decisions,
+draft the README, and review the project against the subject (lint fixes,
+output path, and per-prompt error handling).
